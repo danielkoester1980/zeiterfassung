@@ -247,7 +247,7 @@ h1{font-size:32px;font-weight:700;margin-bottom:6px;letter-spacing:-0.5px;color:
           <circle id="ring-fill" cx="105" cy="105" r="92" fill="none" stroke="var(--acc)" stroke-width="6" stroke-linecap="round" stroke-dasharray="578" stroke-dashoffset="578" style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 1s linear,stroke 0.5s"/>
         </svg>
         <div class="timer-center" id="timer-center" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:170px">
-          <div class="t-main" id="t-disp" style="font-size:52px;font-weight:200;letter-spacing:-2px">–:––:––</div>
+          <div class="t-main" id="t-disp" style="font-size:42px;font-weight:200;letter-spacing:-2px">–:––:––</div>
           <div id="holiday-wrap"></div>
         </div>
       </div>
@@ -537,8 +537,8 @@ function applyTimerStyle(){
   if(s==='circle'){
     wrap.style.cssText='position:relative;width:210px;height:210px';
     svg.style.display='';
-    center.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:170px';
-    document.getElementById('t-disp').style.fontSize='52px';
+    center.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:160px';
+    document.getElementById('t-disp').style.fontSize='38px';
     barCont.style.display='none';
   } else if(s==='minimal'){
     wrap.style.cssText='width:auto;height:auto;display:flex;justify-content:center';
@@ -631,6 +631,7 @@ function getHolidays(year,land){
   return h;
 }
 function lp(s){return s>=9*3600?45*60:s>=6*3600?30*60:0}
+function lpExpected(targetSec){return targetSec>=9*3600?45*60:targetSec>=6*3600?30*60:0}
 
 let SN=4;
 function updDots(cur){let el=document.getElementById('setup-dots');el.innerHTML='';for(let i=0;i<SN;i++){let d=document.createElement('div');d.className='sdot'+(i<=cur?' done':'');el.appendChild(d)}}
@@ -680,8 +681,11 @@ function initMain(){
   document.getElementById('t-disp').textContent=fmtHMS(Math.round((cfg.dayHours||8)*3600));
   document.getElementById('t-disp').className='t-main';
   document.getElementById('t-lbl').textContent='SOLLZEIT HEUTE';
-  document.getElementById('t-feierabend').textContent='';
-  document.getElementById('pause-info').textContent='Kein Abzug — greift ab 6 Std.';
+  let targetSec=Math.round((cfg.dayHours||8)*3600);
+  let expPause=lpExpected(targetSec);
+  let expPauseMin=Math.floor(expPause/60);
+  document.getElementById('t-feierabend').textContent=expPause>0?'inkl. '+expPauseMin+' Min. Pause':'';
+  document.getElementById('pause-info').textContent=expPause>0?'Gesetzl. '+expPauseMin+' Min. Pause vorgerechnet':'Kein Abzug — unter 6 Std.';
   document.getElementById('ring-fill').style.strokeDashoffset='578';
   document.getElementById('prog-bar-fill').style.width='0%';
   updateKontoStrip();
@@ -767,7 +771,8 @@ function tick(){
   document.getElementById('prog-bar-fill').style.width=(pct*100)+'%';
   document.getElementById('prog-bar-fill').style.background=isOt?'var(--red)':'var(--acc)';
 
-  let endTs=new Date(startEp+(target+eff)*1000);
+  let expectedPause=Math.max(eff,lpExpected(target));
+  let endTs=new Date(startEp+(target+expectedPause)*1000);
   document.getElementById('t-feierabend').textContent='Feierabend: '+pad(endTs.getHours())+':'+pad(endTs.getMinutes())+' Uhr';
   document.getElementById('sv-worked').textContent=fmtHM(netF<0?0:netF);
 
@@ -778,8 +783,12 @@ function tick(){
 
   let effMin=Math.floor(eff/60);
   document.getElementById('sv-pause').textContent=effMin+' Min.';
-  let mMin=Math.floor(manual/60),lMin=Math.floor(legal/60);
-  document.getElementById('pause-info').textContent=manual>0&&manual>=legal?mMin+' Min. erfasst ('+effMin+' abgezogen)':legal>0?'Gesetzl. Mindestpause '+lMin+' Min.':'Kein Abzug — greift ab 6 Std.';
+  let mMin=Math.floor(manual/60),lMin=Math.floor(lpExpected(target)/60);
+  let infoTxt='';
+  if(manual>0&&manual>lpExpected(target))infoTxt=mMin+' Min. Pause erfasst ('+effMin+' abgezogen)';
+  else if(lpExpected(target)>0)infoTxt='Gesetzl. '+lMin+' Min. Pause vorgerechnet';
+  else infoTxt='Kein Abzug — unter 6 Std. Sollzeit';
+  document.getElementById('pause-info').textContent=infoTxt;
 
   let projSaldo=state.saldoMin+Math.round((netF-target)/60);
   let ksEl=document.getElementById('ks-val');
