@@ -194,30 +194,61 @@ h1{font-size:32px;font-weight:700;margin-bottom:6px;letter-spacing:-0.5px;color:
     </div>
     <button class="btn btn-acc" onclick="sNext(0)">Weiter →</button>
   </div>
+
   <div class="setup-step" id="st1">
-    <h1>Arbeitstage</h1>
-    <p class="setup-hint">An welchen Tagen arbeitest du?</p>
-    <div class="card">
+    <h1>Arbeitsmodell</h1>
+    <p class="setup-hint">Wie sieht deine Arbeitszeit aus?</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px">
+      <div id="mode-normal" onclick="selectMode('normal')" style="background:var(--acc-lt);border:1.5px solid var(--acc);border-radius:var(--radius);padding:20px 12px;text-align:center;cursor:pointer">
+        <div style="font-size:28px;margin-bottom:8px">🗓️</div>
+        <div style="font-size:15px;font-weight:600;color:var(--acc-tx)">Normal</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">Feste Wochentage Mo–Fr (oder Mo–Sa)</div>
+      </div>
+      <div id="mode-shift" onclick="selectMode('shift')" style="background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--radius);padding:20px 12px;text-align:center;cursor:pointer">
+        <div style="font-size:28px;margin-bottom:8px">🔄</div>
+        <div style="font-size:15px;font-weight:600;color:var(--text2)">Schichtdienst</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">Wechselnde Schichten, kein fester Wochentag</div>
+      </div>
+    </div>
+    <button class="btn btn-acc" onclick="sNext(1)">Weiter →</button>
+  </div>
+
+  <div class="setup-step" id="st2">
+    <h1 id="st2-title">Arbeitstage</h1>
+    <p class="setup-hint" id="st2-hint">An welchen Tagen arbeitest du?</p>
+    <div class="card" id="st2-normal">
       <div class="day-grid" id="su-days">
         <div class="day-btn on" data-d="1">Mo</div><div class="day-btn on" data-d="2">Di</div><div class="day-btn on" data-d="3">Mi</div><div class="day-btn on" data-d="4">Do</div><div class="day-btn on" data-d="5">Fr</div><div class="day-btn" data-d="6">Sa</div><div class="day-btn" data-d="0">So</div>
       </div>
       <p class="days-hint" id="su-days-cnt">5 Tage gewählt</p>
     </div>
-    <button class="btn btn-acc" onclick="sNext(1)">Weiter →</button>
+    <div class="card" id="st2-shift" style="display:none">
+      <div class="row">
+        <label>Stunden pro Schicht</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" id="su-shift-h" value="7.7" min="1" max="24" step="0.1" style="width:70px;font-size:16px;font-weight:500;text-align:right;border:none;background:transparent;color:var(--acc);outline:none">
+          <span style="font-size:14px;color:var(--text3)">Std.</span>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-top:8px;line-height:1.5">Freie Tage trägst du im Konto-Tab ein. Das Gleitzeitkonto rechnet alles automatisch zusammen.</p>
+    </div>
+    <button class="btn btn-acc" onclick="sNext(2)">Weiter →</button>
   </div>
-  <div class="setup-step" id="st2">
+
+  <div class="setup-step" id="st3">
     <h1>Wochenstunden</h1>
-    <p class="setup-hint">Wie viele Stunden arbeitest du pro Woche?</p>
+    <p class="setup-hint" id="st3-hint">Wie viele Stunden arbeitest du pro Woche?</p>
     <div class="card">
       <input class="input-big" type="number" id="su-wh" value="40" min="5" max="60" step="0.5">
       <span class="unit-hint">Stunden pro Woche</span>
       <div style="margin-top:16px;padding-top:12px;border-top:0.5px solid var(--border)">
-        <div class="row" style="padding:4px 0"><label>Tagesstunden (errechnet)</label><span id="su-dh" style="font-size:15px;font-weight:500;color:var(--acc)">8,0 Std.</span></div>
+        <div class="row" style="padding:4px 0"><label id="su-dh-label">Tagesstunden (errechnet)</label><span id="su-dh" style="font-size:15px;font-weight:500;color:var(--acc)">8,0 Std.</span></div>
       </div>
     </div>
-    <button class="btn btn-acc" onclick="sNext(2)">Weiter →</button>
+    <button class="btn btn-acc" onclick="sNext(3)">Weiter →</button>
   </div>
-  <div class="setup-step" id="st3">
+
+  <div class="setup-step" id="st4">
     <h1>Gleitzeitkonto</h1>
     <p class="setup-hint">Hast du bereits Über- oder Minusstunden?</p>
     <div class="card">
@@ -380,11 +411,20 @@ h1{font-size:32px;font-weight:700;margin-bottom:6px;letter-spacing:-0.5px;color:
 
   <!-- ARBEITSZEIT -->
   <div class="card">
+    <div class="slabel">Arbeitsmodell</div>
+    <div class="row" style="padding:8px 0"><label style="color:var(--text2)">Aktueller Modus</label><span id="c-mode-badge" style="font-size:13px;font-weight:500;color:var(--acc-tx);background:var(--acc-lt);padding:3px 10px;border-radius:20px">Normal</span></div>
+    <p style="font-size:12px;color:var(--text3);margin-top:4px">Zum Ändern des Arbeitsmodells bitte die App neu einrichten (Einstellungen → ganz unten).</p>
+  </div>
+  <div class="card">
     <div class="slabel">Arbeitszeit</div>
     <div class="row"><label>Wochenstunden</label><div style="display:flex;align-items:center;gap:6px"><input type="number" id="c-wh" min="5" max="60" step="0.5" style="width:60px;font-size:15px;text-align:right;border:none;background:transparent;color:var(--text);outline:none"><span style="font-size:14px;color:var(--text3)">Std.</span></div></div>
     <div class="row"><label style="color:var(--text2)">Tagesstunden</label><span id="c-dh" style="font-size:15px;font-weight:500;color:var(--acc)">8,0 Std.</span></div>
   </div>
-  <div class="card">
+  <div id="c-shift-wrap" style="display:none" class="card">
+    <div class="slabel">Schichtlänge</div>
+    <div class="row"><label>Stunden pro Schicht</label><div style="display:flex;align-items:center;gap:6px"><input type="number" id="c-shift-h" value="7.7" min="1" max="24" step="0.1" style="width:60px;font-size:15px;text-align:right;border:none;background:transparent;color:var(--text);outline:none"><span style="font-size:14px;color:var(--text3)">Std.</span></div></div>
+  </div>
+  <div id="c-days-wrap" class="card">
     <div class="slabel">Arbeitstage</div>
     <div class="day-grid" id="c-days">
       <div class="day-btn" data-d="1">Mo</div><div class="day-btn" data-d="2">Di</div><div class="day-btn" data-d="3">Mi</div><div class="day-btn" data-d="4">Do</div><div class="day-btn" data-d="5">Fr</div><div class="day-btn" data-d="6">Sa</div><div class="day-btn" data-d="0">So</div>
@@ -609,7 +649,15 @@ function initDays(id,active){
     });
   });
 }
-function updSuDH(){let cnt=dc('su-days')||1;let wh=parseFloat(document.getElementById('su-wh').value)||40;document.getElementById('su-dh').textContent=(wh/cnt).toFixed(1).replace('.',',')+' Std.';}
+function updSuDH(){
+  if(workMode==='shift'){
+    let h=parseFloat(document.getElementById('su-shift-h').value)||7.7;
+    document.getElementById('su-dh').textContent=h.toFixed(1).replace('.',',')+' Std.';
+  } else {
+    let cnt=dc('su-days')||1;let wh=parseFloat(document.getElementById('su-wh').value)||40;
+    document.getElementById('su-dh').textContent=(wh/cnt).toFixed(1).replace('.',',')+' Std.';
+  }
+}
 function updPrev(sId,hId,mId,pId){
   let m=hmToMin(document.getElementById(sId).value,document.getElementById(hId).value,document.getElementById(mId).value);
   let el=document.getElementById(pId);
@@ -633,19 +681,54 @@ function getHolidays(year,land){
 function lp(s){return s>=9*3600?45*60:s>=6*3600?30*60:0}
 function lpExpected(targetSec){return targetSec>=9*3600?45*60:targetSec>=6*3600?30*60:0}
 
-let SN=4;
+let SN=5;
+let workMode='normal';
+function selectMode(m){
+  workMode=m;
+  let n=document.getElementById('mode-normal'),s=document.getElementById('mode-shift');
+  if(m==='normal'){
+    n.style.background='var(--acc-lt)';n.style.borderColor='var(--acc)';
+    n.querySelector('div:nth-child(2)').style.color='var(--acc-tx)';
+    s.style.background='var(--bg3)';s.style.borderColor='var(--border2)';
+    s.querySelector('div:nth-child(2)').style.color='var(--text2)';
+    document.getElementById('st2-title').textContent='Arbeitstage';
+    document.getElementById('st2-hint').textContent='An welchen Tagen arbeitest du?';
+    document.getElementById('st2-normal').style.display='';
+    document.getElementById('st2-shift').style.display='none';
+    document.getElementById('st3-hint').textContent='Wie viele Stunden arbeitest du pro Woche?';
+    document.getElementById('su-dh-label').textContent='Tagesstunden (errechnet)';
+  } else {
+    s.style.background='var(--acc-lt)';s.style.borderColor='var(--acc)';
+    s.querySelector('div:nth-child(2)').style.color='var(--acc-tx)';
+    n.style.background='var(--bg3)';n.style.borderColor='var(--border2)';
+    n.querySelector('div:nth-child(2)').style.color='var(--text2)';
+    document.getElementById('st2-title').textContent='Schichtlänge';
+    document.getElementById('st2-hint').textContent='Wie lange ist eine normale Schicht?';
+    document.getElementById('st2-normal').style.display='none';
+    document.getElementById('st2-shift').style.display='';
+    document.getElementById('st3-hint').textContent='Wie viele Stunden arbeitest du pro Woche im Durchschnitt?';
+    document.getElementById('su-dh-label').textContent='Stunden pro Schicht';
+  }
+}
 function updDots(cur){let el=document.getElementById('setup-dots');el.innerHTML='';for(let i=0;i<SN;i++){let d=document.createElement('div');d.className='sdot'+(i<=cur?' done':'');el.appendChild(d)}}
 function sNext(step){
   if(step===0&&!document.getElementById('su-land').value){alert('Bitte Bundesland wählen');return}
   document.getElementById('st'+step).classList.remove('active');
   document.getElementById('st'+(step+1)).classList.add('active');
   updDots(step+1);
-  if(step+1===2){document.getElementById('su-wh').addEventListener('input',updSuDH);updSuDH();}
-  if(step+1===3){['su-sign','su-sh','su-sm'].forEach(id=>document.getElementById(id).addEventListener('input',()=>updPrev('su-sign','su-sh','su-sm','su-prev')));}
+  if(step+1===3){document.getElementById('su-wh').addEventListener('input',updSuDH);updSuDH();}
+  if(step+1===4){['su-sign','su-sh','su-sm'].forEach(id=>document.getElementById(id).addEventListener('input',()=>updPrev('su-sign','su-sh','su-sm','su-prev')));}
 }
 function sFinish(){
-  let cnt=dc('su-days')||1,wh=parseFloat(document.getElementById('su-wh').value)||40;
-  cfg={land:document.getElementById('su-land').value,workDays:gd('su-days'),weekHours:wh,dayHours:wh/cnt};
+  let wh=parseFloat(document.getElementById('su-wh').value)||40;
+  let dayH;
+  if(workMode==='shift'){
+    dayH=parseFloat(document.getElementById('su-shift-h').value)||7.7;
+  } else {
+    let cnt=dc('su-days')||1;
+    dayH=wh/cnt;
+  }
+  cfg={land:document.getElementById('su-land').value,workDays:workMode==='normal'?gd('su-days'):[0,1,2,3,4,5,6],weekHours:wh,dayHours:dayH,workMode};
   state.saldoMin=hmToMin(document.getElementById('su-sign').value,document.getElementById('su-sh').value,document.getElementById('su-sm').value);
   save();launch();
 }
@@ -855,12 +938,28 @@ function renderVerlauf(){
 
 // ---- EINSTELLUNGEN ----
 function loadCfgForm(){
+  workMode=cfg.workMode||'normal';
   document.getElementById('c-wh').value=cfg.weekHours||40;
   document.getElementById('c-land').value=cfg.land||'NW';
-  let cnt=cfg.workDays?cfg.workDays.length:5;
-  document.getElementById('c-dh').textContent=((cfg.weekHours||40)/cnt).toFixed(1).replace('.',',')+' Std.';
-  initDays('c-days',cfg.workDays||[1,2,3,4,5]);
-  document.getElementById('c-wh').addEventListener('input',()=>{let wh=parseFloat(document.getElementById('c-wh').value)||40;let dc2=dc('c-days')||1;document.getElementById('c-dh').textContent=(wh/dc2).toFixed(1).replace('.',',')+' Std.';});
+  if(workMode==='shift'){
+    document.getElementById('c-days-wrap').style.display='none';
+    document.getElementById('c-shift-wrap').style.display='';
+    document.getElementById('c-shift-h').value=cfg.dayHours||7.7;
+    document.getElementById('c-dh').textContent=(cfg.dayHours||7.7).toFixed(1).replace('.',',')+' Std. pro Schicht';
+    document.getElementById('c-mode-badge').textContent='Schichtdienst';
+  } else {
+    document.getElementById('c-days-wrap').style.display='';
+    document.getElementById('c-shift-wrap').style.display='none';
+    let cnt=cfg.workDays?cfg.workDays.length:5;
+    document.getElementById('c-dh').textContent=((cfg.weekHours||40)/cnt).toFixed(1).replace('.',',')+' Std.';
+    document.getElementById('c-mode-badge').textContent='Normales Arbeitsverhältnis';
+    initDays('c-days',cfg.workDays||[1,2,3,4,5]);
+  }
+  document.getElementById('c-wh').addEventListener('input',()=>{
+    let wh=parseFloat(document.getElementById('c-wh').value)||40;
+    if(workMode==='shift'){document.getElementById('c-dh').textContent=(cfg.dayHours||7.7).toFixed(1).replace('.',',')+' Std. pro Schicht';}
+    else{let dc2=dc('c-days')||1;document.getElementById('c-dh').textContent=(wh/dc2).toFixed(1).replace('.',',')+' Std.';}
+  });
   let s=state.saldoMin||0,absM=Math.abs(s);
   document.getElementById('c-sign').value=s<0?'-1':'1';
   document.getElementById('c-sh').value=Math.floor(absM/60);
@@ -869,8 +968,15 @@ function loadCfgForm(){
   ['c-sign','c-sh','c-sm'].forEach(id=>document.getElementById(id).addEventListener('input',()=>updPrev('c-sign','c-sh','c-sm','c-prev')));
 }
 function saveCfg(){
-  let days=gd('c-days'),cnt=days.length||1,wh=parseFloat(document.getElementById('c-wh').value)||40;
-  cfg.weekHours=wh;cfg.dayHours=wh/cnt;cfg.workDays=days;cfg.land=document.getElementById('c-land').value;
+  let wh=parseFloat(document.getElementById('c-wh').value)||40;
+  let dayH,days;
+  if(workMode==='shift'){
+    dayH=parseFloat(document.getElementById('c-shift-h').value)||7.7;
+    days=[0,1,2,3,4,5,6];
+  } else {
+    days=gd('c-days');let cnt=days.length||1;dayH=wh/cnt;
+  }
+  cfg.weekHours=wh;cfg.dayHours=dayH;cfg.workDays=days;cfg.land=document.getElementById('c-land').value;cfg.workMode=workMode;
   state.saldoMin=hmToMin(document.getElementById('c-sign').value,document.getElementById('c-sh').value,document.getElementById('c-sm').value);
   save();
   document.getElementById('c-dh').textContent=(wh/cnt).toFixed(1).replace('.',',')+' Std.';
