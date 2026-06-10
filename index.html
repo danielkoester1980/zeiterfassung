@@ -286,13 +286,6 @@ h2{font-size:20px;font-weight:600;margin-bottom:12px;color:var(--text)}
   <div id="wrap-stop" style="display:none">
     <div class="card" style="margin-bottom:10px">
       <div class="row"><label style="color:var(--text2);font-size:14px">Startzeit korrigieren</label><input type="time" id="t-corr" style="width:110px;font-size:15px" onchange="correctStart()"></div>
-      <div class="row"><label style="color:var(--text2);font-size:14px">Endzeit setzen</label>
-        <div style="display:flex;align-items:center;gap:8px">
-          <input type="time" id="t-end-corr" style="width:110px;font-size:15px">
-          <button onclick="applyEndTime()" style="background:var(--acc-lt);color:var(--acc-tx);border:.5px solid var(--acc);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:500;cursor:pointer">OK</button>
-        </div>
-      </div>
-      <p style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5">Endzeit setzen stoppt den Timer rückwirkend — z.B. wenn du vergessen hast auf Feierabend zu drücken.</p>
     </div>
     <button class="btn btn-red" onclick="showEndModal()">⏹ &nbsp;Feierabend</button>
   </div>
@@ -479,6 +472,19 @@ h2{font-size:20px;font-weight:600;margin-bottom:12px;color:var(--text)}
     <h3>Feierabend 🎉</h3>
     <div class="modal-row"><label>Notiz zum Tag (optional)</label><textarea id="end-note" placeholder="z.B. Homeoffice, Dienstreise, Meeting..."></textarea></div>
     <div id="end-summary" style="background:var(--bg3);border-radius:var(--radius-sm);padding:12px;font-size:14px;color:var(--text2);margin-bottom:8px"></div>
+    <div id="end-time-corr" style="display:none;background:var(--bg3);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Zeitkorrektur</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <label style="font-size:14px;color:var(--text2)">Startzeit</label>
+        <input type="time" id="end-corr-start" style="font-size:14px;padding:5px 8px;border:.5px solid var(--border2);border-radius:8px;background:var(--bg4);color:var(--text);outline:none">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <label style="font-size:14px;color:var(--text2)">Endzeit</label>
+        <input type="time" id="end-corr-end" style="font-size:14px;padding:5px 8px;border:.5px solid var(--border2);border-radius:8px;background:var(--bg4);color:var(--text);outline:none">
+      </div>
+      <button class="btn btn-acc" style="margin-top:0;padding:10px" onclick="applyEndTimeCorr()">Zeiten übernehmen</button>
+    </div>
+    <button onclick="toggleEndTimeCorr()" style="width:100%;padding:10px;font-size:13px;font-weight:500;border-radius:var(--radius-sm);cursor:pointer;border:.5px solid var(--border2);background:var(--bg3);color:var(--text2);margin-bottom:8px" id="end-corr-btn">⏱ Zeitkorrektur</button>
     <div class="modal-btns">
       <button class="btn btn-ghost" onclick="closeModal('modal-end')">Abbrechen</button>
       <button class="btn btn-acc" onclick="stopTimer()">Speichern</button>
@@ -491,7 +497,12 @@ h2{font-size:20px;font-weight:600;margin-bottom:12px;color:var(--text)}
     <h3>Eintrag bearbeiten</h3>
     <div class="modal-row"><label>Datum</label><input type="date" id="edit-date"></div>
     <div class="modal-row"><label>Startzeit</label><input type="time" id="edit-start"></div>
-    <div class="modal-row"><label>Netto gearbeitet (Min.)</label><input type="number" id="edit-net" min="0" max="1440"></div>
+    <div class="modal-row"><label>Endzeit</label><input type="time" id="edit-end"></div>
+    <div class="modal-row"><label>Pause (Min.)</label><input type="number" id="edit-pause" min="0" max="240" step="5" placeholder="0"></div>
+    <div class="modal-row" style="background:var(--bg3);border-radius:8px;padding:10px;margin-top:4px">
+      <label style="font-size:12px;color:var(--text3)">Netto (wird automatisch berechnet)</label>
+      <div style="font-size:16px;font-weight:500;color:var(--acc);margin-top:4px" id="edit-net-preview">0:00 Std.</div>
+    </div>
     <div class="modal-row"><label>Notiz</label><textarea id="edit-note" placeholder="optional..."></textarea></div>
     <div class="modal-btns">
       <button class="btn btn-ghost" onclick="closeModal('modal-edit')">Abbrechen</button>
@@ -782,6 +793,36 @@ function tick(){
   ksEl.textContent=(projSaldo>0?'+':'')+minToHM(projSaldo);ksEl.style.color=projSaldo>0?'var(--red-tx)':projSaldo<0?'var(--green-tx)':'var(--text3)';
   if(isOt&&!notified){notified=true;sendNotification('🎉 Feierabend!','Du hast deine Sollzeit erreicht. Gute Arbeit!');}
 }
+function toggleEndTimeCorr(){
+  let el=document.getElementById('end-time-corr');
+  let btn=document.getElementById('end-corr-btn');
+  let vis=el.style.display==='none';
+  el.style.display=vis?'':'none';
+  btn.textContent=vis?'⏱ Zeitkorrektur schließen':'⏱ Zeitkorrektur';
+}
+function applyEndTimeCorr(){
+  let startVal=document.getElementById('end-corr-start').value;
+  let endVal=document.getElementById('end-corr-end').value;
+  if(!startVal||!endVal){alert('Bitte Start- und Endzeit eingeben');return;}
+  let [sh,sm]=startVal.split(':').map(Number);
+  let [eh,em]=endVal.split(':').map(Number);
+  let newStart=new Date();newStart.setHours(sh,sm,0,0);
+  let newEnd=new Date();newEnd.setHours(eh,em,0,0);
+  if(newEnd<=newStart){alert('Endzeit muss nach der Startzeit liegen');return;}
+  if(newEnd>new Date()){alert('Endzeit kann nicht in der Zukunft liegen');return;}
+  startEp=newStart.getTime();
+  window._endEpOverride=newEnd.getTime();
+  // Update summary
+  let gross=Math.floor((window._endEpOverride-startEp)/1000);
+  let manual=totalPauseSec,target=Math.round((cfg.dayHours||8)*3600);
+  let eff=Math.max(manual,lp(gross-manual)),netF=gross-eff,ots=netF-target;
+  document.getElementById('end-summary').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Gearbeitet</div><div style="font-size:17px;font-weight:500;margin-top:2px">${fmtHM(netF<0?0:netF)} Std.</div></div>
+    <div><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Überstunden</div><div style="font-size:17px;font-weight:500;margin-top:2px;color:${ots>0?'var(--red-tx)':'var(--green-tx)'}">${ots>=0?'+':''}${minToHM(Math.round(ots/60))}</div></div>
+  </div>`;
+  document.getElementById('end-time-corr').style.display='none';
+  document.getElementById('end-corr-btn').textContent='⏱ Zeitkorrektur';
+}
 function showEndModal(){
   if(!running)return;
   let now=window._endEpOverride||Date.now();
@@ -793,6 +834,12 @@ function showEndModal(){
     <div><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Überstunden</div><div style="font-size:17px;font-weight:500;margin-top:2px;color:${ots>0?'var(--red-tx)':'var(--green-tx)'}">${ots>=0?'+':''}${minToHM(Math.round(ots/60))}</div></div>
   </div>`;
   document.getElementById('end-note').value='';
+  // Pre-fill correction fields
+  let startD=new Date(startEp),nowD=new Date(now);
+  document.getElementById('end-corr-start').value=pad(startD.getHours())+':'+pad(startD.getMinutes());
+  document.getElementById('end-corr-end').value=pad(nowD.getHours())+':'+pad(nowD.getMinutes());
+  document.getElementById('end-time-corr').style.display='none';
+  document.getElementById('end-corr-btn').textContent='⏱ Zeitkorrektur';
   document.getElementById('modal-end').style.display='flex';
 }
 function stopTimer(){
@@ -904,17 +951,53 @@ function showEditModal(idx){
   editIdx=idx;let e=state.history[idx];
   document.getElementById('edit-date').value=e.date;
   document.getElementById('edit-start').value=e.start;
-  document.getElementById('edit-net').value=e.netMin;
+  // Calculate end time from start + netMin + pauseMin
+  let startMins=parseInt(e.start.split(':')[0])*60+parseInt(e.start.split(':')[1]);
+  let pauseMin=e.pauseMin||0;
+  let endMins=startMins+e.netMin+pauseMin;
+  let endH=Math.floor(endMins/60)%24,endM=endMins%60;
+  document.getElementById('edit-end').value=pad(endH)+':'+pad(endM);
+  document.getElementById('edit-pause').value=pauseMin;
   document.getElementById('edit-note').value=e.note||'';
+  updateEditPreview();
+  document.getElementById('edit-start').oninput=updateEditPreview;
+  document.getElementById('edit-end').oninput=updateEditPreview;
+  document.getElementById('edit-pause').oninput=updateEditPreview;
   document.getElementById('modal-edit').style.display='flex';
+}
+function updateEditPreview(){
+  let startVal=document.getElementById('edit-start').value;
+  let endVal=document.getElementById('edit-end').value;
+  let pauseVal=parseInt(document.getElementById('edit-pause').value)||0;
+  if(!startVal||!endVal){document.getElementById('edit-net-preview').textContent='—';return;}
+  let [sh,sm]=startVal.split(':').map(Number);
+  let [eh,em]=endVal.split(':').map(Number);
+  let grossMin=((eh*60+em)-(sh*60+sm));
+  if(grossMin<0)grossMin+=24*60;
+  let netMin=grossMin-pauseVal;
+  document.getElementById('edit-net-preview').textContent=netMin>0?fmtHM(netMin*60)+' Std.':'—';
 }
 function saveEdit(){
   let e=state.history[editIdx];
-  let oldOt=e.otMin,newNet=parseInt(document.getElementById('edit-net').value)||0;
+  let startVal=document.getElementById('edit-start').value;
+  let endVal=document.getElementById('edit-end').value;
+  let pauseVal=parseInt(document.getElementById('edit-pause').value)||0;
+  if(!startVal||!endVal){alert('Bitte Start- und Endzeit eingeben');return;}
+  let [sh,sm]=startVal.split(':').map(Number);
+  let [eh,em]=endVal.split(':').map(Number);
+  let grossMin=((eh*60+em)-(sh*60+sm));
+  if(grossMin<0)grossMin+=24*60;
+  let newNet=Math.max(0,grossMin-pauseVal);
   let newOt=newNet-Math.round((cfg.dayHours||8)*60);
+  if(!confirm('Eintrag speichern?\nGearbeitet: '+fmtHM(newNet*60)+' Std.\nÜberstunden: '+(newOt>=0?'+':'')+minToHM(newOt)))return;
+  let oldOt=e.otMin;
   state.saldoMin=Math.round(state.saldoMin-oldOt+newOt);
-  e.date=document.getElementById('edit-date').value;e.start=document.getElementById('edit-start').value;
-  e.netMin=newNet;e.otMin=newOt;e.note=document.getElementById('edit-note').value;
+  e.date=document.getElementById('edit-date').value;
+  e.start=startVal;
+  e.netMin=newNet;
+  e.otMin=newOt;
+  e.pauseMin=pauseVal;
+  e.note=document.getElementById('edit-note').value;
   save();closeModal('modal-edit');renderVerlauf();updateKontoStrip();
 }
 function confirmDelete(){closeModal('modal-edit');document.getElementById('modal-confirm').style.display='flex';}
