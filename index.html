@@ -899,76 +899,144 @@ function closeModal(id){document.getElementById(id).style.display='none';}
 // KONTO
 function renderKonto(){
   let s=state.saldoMin,v=document.getElementById('k-val');
-  v.textContent=(s>0?'+':s<0?'-':'')+minToHM(Math.abs(s));v.style.color=s>0?'var(--red-tx)':s<0?'var(--green-tx)':'var(--text2)';
+  v.textContent=(s>0?'+':s<0?'-':'')+minToHM(Math.abs(s));
+  v.style.color=s>0?'var(--red-tx)':s<0?'var(--green-tx)':'var(--text2)';
   document.getElementById('k-sub').textContent=s>0?'Std. Überstunden':s<0?'Std. Minusstunden':'Ausgeglichen';
-  document.getElementById('k-prog').style.width=Math.min(100,Math.abs(s/60)*5)+'%';document.getElementById('k-prog').style.background=s>=0?'var(--red)':'var(--green)';
+  document.getElementById('k-prog').style.width=Math.min(100,Math.abs(s/60)*5)+'%';
+  document.getElementById('k-prog').style.background=s>=0?'var(--red)':'var(--green)';
   document.getElementById('k-date').value=new Date().toISOString().slice(0,10);
-  let total=cfg.urlaubJahr||30,taken=Math.round((state.urlaubGenommen||0)*2)/2,left=Math.round((total-taken)*2)/2;
+
+  // Urlaub — immer ganze Tage
+  let total=cfg.urlaubJahr||30;
+  let taken=Math.round(state.urlaubGenommen||0);
+  let left=total-taken;
   document.getElementById('urlaub-left').textContent=left+' Tage';
-  document.getElementById('urlaub-bar-fill').style.width=(taken/total*100)+'%';
+  document.getElementById('urlaub-bar-fill').style.width=Math.min(100,(taken/total*100))+'%';
   document.getElementById('urlaub-pct').textContent=Math.round(taken/total*100)+'%';
+
+  // Eintragshistorie
   let kl=state.kontoLog||[];
-  if(kl.length){document.getElementById('k-hist-card').style.display='';document.getElementById('k-hist').innerHTML=kl.slice(0,10).map((e,i)=>{
-    let detail=e.typ==='Urlaub'?(e.tage||Math.round(e.val)||1)+' Tag(e)':e.delta!==0?minToHM(Math.abs(e.delta))+' Std.':e.val?e.val+' Std.':'';
-    let badge=e.delta!==0?`<span class="badge ${e.delta>0?'b-red':e.delta<0?'b-green':'b-gray'}">${e.delta>0?'+':''}${minToHM(e.delta)}</span>`:'';
-    return`<div class="hi-item"><div><div class="hi-main">${e.typ}${detail?' · <span style="color:var(--acc-tx)">'+detail+'</span>':''}</div><div class="hi-date">${e.date}</div></div><div style="display:flex;align-items:center;gap:8px">${badge}<button onclick="deleteKontoEntry(${i})" style="background:var(--red-lt);color:var(--red-tx);border:none;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer">✕</button></div></div>`;
-  }).join('');}
-  // Init urlaub einheit toggle
+  if(kl.length){
+    document.getElementById('k-hist-card').style.display='';
+    document.getElementById('k-hist').innerHTML=kl.slice(0,20).map((e,i)=>{
+      let detail='';
+      if(e.typ==='Urlaub') detail=Math.round(e.tage||e.val||1)+' Tag(e)';
+      else if(e.delta!==0) detail=minToHM(Math.abs(e.delta))+' Std.';
+      else if(e.val) detail=e.val+' Std.';
+      let badge=e.delta!==0?`<span class="badge ${e.delta<0?'b-green':'b-red'}">${e.delta>0?'+':''}${minToHM(e.delta)}</span>`:'';
+      return`<div class="hi-item">
+        <div>
+          <div class="hi-main">${e.typ} <span style="color:var(--acc-tx);font-weight:400">${detail}</span></div>
+          <div class="hi-date">${e.date}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${badge}
+          <button onclick="deleteKontoEntry(${i})" style="background:var(--red-lt);color:var(--red-tx);border:none;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;font-weight:600">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    document.getElementById('k-hist-card').style.display='none';
+  }
+
+  // Reset Eingabefelder
+  document.getElementById('k-typ').value='urlaub';
   document.getElementById('k-einheit-row').style.display='flex';
   document.getElementById('k-hval').value='1';
+  document.getElementById('k-hval').step='1';
+  document.getElementById('k-hval').min='1';
+  document.getElementById('k-hval').max='60';
   document.getElementById('k-unit').textContent='Tage';
   document.getElementById('k-menge-label').textContent='Anzahl Tage';
   window._kontoEinheit='tage';
-  window.setKontoEinheit=function(e){
-    window._kontoEinheit=e;
-    let isTage=e==='tage';
-    let td=document.getElementById('k-einheit-tage'),sd=document.getElementById('k-einheit-stunden');
-    td.style.background=isTage?'var(--acc-lt)':'var(--bg3)';td.style.color=isTage?'var(--acc-tx)':'var(--text3)';td.style.borderColor=isTage?'var(--acc)':'var(--border2)';
-    sd.style.background=!isTage?'var(--acc-lt)':'var(--bg3)';sd.style.color=!isTage?'var(--acc-tx)':'var(--text3)';sd.style.borderColor=!isTage?'var(--acc)':'var(--border2)';
-    if(isTage){document.getElementById('k-hval').value='1';document.getElementById('k-hval').step='1';document.getElementById('k-hval').min='1';document.getElementById('k-unit').textContent='Tage';document.getElementById('k-menge-label').textContent='Anzahl Tage';}
-    else{document.getElementById('k-hval').value=(cfg.dayHours||8).toFixed(1);document.getElementById('k-unit').textContent='Std.';document.getElementById('k-menge-label').textContent='Stunden';}
-  };
+
+  // Typ wechsel
   document.getElementById('k-typ').onchange=function(){
     let isUrlaub=this.value==='urlaub';
     document.getElementById('k-einheit-row').style.display=isUrlaub?'flex':'none';
-    if(isUrlaub){window.setKontoEinheit('tage');}
-    else{document.getElementById('k-hval').value=(cfg.dayHours||8).toFixed(1);document.getElementById('k-unit').textContent='Std.';document.getElementById('k-menge-label').textContent='Stunden';}
+    if(isUrlaub){
+      window.setKontoEinheit('tage');
+    } else {
+      document.getElementById('k-hval').value=(cfg.dayHours||8).toFixed(1);
+      document.getElementById('k-hval').step='0.5';
+      document.getElementById('k-hval').min='0.5';
+      document.getElementById('k-hval').max='24';
+      document.getElementById('k-unit').textContent='Std.';
+      document.getElementById('k-menge-label').textContent='Stunden';
+    }
   };
 }
+
+window.setKontoEinheit=function(e){
+  window._kontoEinheit=e;
+  let isTage=e==='tage';
+  let td=document.getElementById('k-einheit-tage'),sd=document.getElementById('k-einheit-stunden');
+  td.style.background=isTage?'var(--acc-lt)':'var(--bg3)';td.style.color=isTage?'var(--acc-tx)':'var(--text3)';td.style.borderColor=isTage?'var(--acc)':'var(--border2)';
+  sd.style.background=!isTage?'var(--acc-lt)':'var(--bg3)';sd.style.color=!isTage?'var(--acc-tx)':'var(--text3)';sd.style.borderColor=!isTage?'var(--acc)':'var(--border2)';
+  if(isTage){
+    document.getElementById('k-hval').value='1';
+    document.getElementById('k-hval').step='1';
+    document.getElementById('k-hval').min='1';
+    document.getElementById('k-hval').max='60';
+    document.getElementById('k-unit').textContent='Tage';
+    document.getElementById('k-menge-label').textContent='Anzahl Tage';
+  } else {
+    document.getElementById('k-hval').value=(cfg.dayHours||8).toFixed(1);
+    document.getElementById('k-hval').step='0.5';
+    document.getElementById('k-hval').min='0.5';
+    document.getElementById('k-hval').max='24';
+    document.getElementById('k-unit').textContent='Std.';
+    document.getElementById('k-menge-label').textContent='Stunden';
+  }
+};
+
 function addKontoConfirm(){
+  let typ=document.getElementById('k-typ').value;
+  let date=document.getElementById('k-date').value;
+  if(!date){alert('Bitte ein Datum auswählen');return;}
+  let val=parseFloat(document.getElementById('k-hval').value)||1;
+  let label={urlaub:'Urlaub',frei:'Freizeitausgleich',feiertag:'Feiertag',krank:'Krank',korr:'Saldo-Korrektur'}[typ];
+  let detail=typ==='urlaub'?(window._kontoEinheit==='tage'?Math.round(val)+' Tag(e)':val+' Std.'):val+' Std.';
+  if(!confirm(label+' am '+date+' ('+detail+') speichern?'))return;
+  addKonto();
+}
+
+function addKonto(){
   let typ=document.getElementById('k-typ').value;
   let date=document.getElementById('k-date').value;
   let val=parseFloat(document.getElementById('k-hval').value)||1;
   let label={urlaub:'Urlaub',frei:'Freizeitausgleich',feiertag:'Feiertag',krank:'Krank',korr:'Saldo-Korrektur'}[typ];
-  let einheit=typ==='urlaub'?(window._kontoEinheit==='tage'?val+' Tag(e)':val+' Std.'):val+' Std.';
-  if(!confirm(label+' am '+date+' ('+einheit+') speichern?'))return;
-  addKonto();
-}
-function addKonto(){
-  let typ=document.getElementById('k-typ').value,date=document.getElementById('k-date').value;
-  let val=parseFloat(document.getElementById('k-hval').value)||1;
-  let delta=0,label={urlaub:'Urlaub',frei:'Freizeitausgleich',feiertag:'Feiertag',krank:'Krank',korr:'Saldo-Korrektur'}[typ];
-  if(typ==='frei')delta=-val*60;
-  else if(typ==='korr')delta=val*60;
+  let delta=0;
+
   if(typ==='urlaub'){
+    // Urlaub: ganze Tage, Gleitzeitkonto bleibt unverändert
     let tage=window._kontoEinheit==='tage'?Math.round(val):Math.round(val/(cfg.dayHours||8));
     tage=Math.max(1,tage);
     state.urlaubGenommen=(state.urlaubGenommen||0)+tage;
-    delta=0;
-    state.kontoLog.unshift({typ:label,date,delta:0,val:tage,tage,einheitLabel:tage+' Tag(e)'});
-    save();renderKonto();updateKontoStrip();return;
+    state.kontoLog.unshift({typ:label,date,delta:0,val:tage,tage});
+  } else if(typ==='frei'){
+    delta=-Math.round(val*60);
+    state.saldoMin=Math.round(state.saldoMin+delta);
+    state.kontoLog.unshift({typ:label,date,delta,val});
+  } else if(typ==='korr'){
+    delta=Math.round(val*60);
+    state.saldoMin=Math.round(state.saldoMin+delta);
+    state.kontoLog.unshift({typ:label,date,delta,val});
+  } else {
+    // feiertag, krank — neutral
+    state.kontoLog.unshift({typ:label,date,delta:0,val});
   }
-  state.saldoMin=Math.round(state.saldoMin+delta);
-  let einheitLabel=typ==='urlaub'?(window._kontoEinheit==='tage'?val+' Tag(e)':val+' Std.'):val+' Std.';
-  state.kontoLog.unshift({typ:label,date,delta:Math.round(delta),val,einheit:einheitLabel});
   save();renderKonto();updateKontoStrip();
 }
+
 function deleteKontoEntry(idx){
   if(!confirm('Diesen Eintrag wirklich löschen?'))return;
   let e=state.kontoLog[idx];
-  state.saldoMin=Math.round(state.saldoMin-e.delta);
+  // Gleitzeitkonto zurückrechnen
+  if(e.delta!==0) state.saldoMin=Math.round(state.saldoMin-e.delta);
+  // Urlaubstage zurückgeben
   if(e.typ==='Urlaub'){
-    let tage=e.tage||Math.round(e.val)||1;
+    let tage=Math.round(e.tage||e.val||1);
     state.urlaubGenommen=Math.max(0,(state.urlaubGenommen||0)-tage);
   }
   state.kontoLog.splice(idx,1);
