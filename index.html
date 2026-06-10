@@ -908,7 +908,7 @@ function renderKonto(){
   document.getElementById('urlaub-bar-fill').style.width=(taken/total*100)+'%';
   document.getElementById('urlaub-pct').textContent=Math.round(taken/total*100)+'%';
   let kl=state.kontoLog||[];
-  if(kl.length){document.getElementById('k-hist-card').style.display='';document.getElementById('k-hist').innerHTML=kl.slice(0,10).map((e,i)=>`<div class="hi-item"><div><div class="hi-main">${e.typ}</div><div class="hi-date">${e.date}</div></div><div style="display:flex;align-items:center;gap:8px"><span class="badge ${e.delta>0?'b-red':e.delta<0?'b-green':'b-gray'}">${e.delta>0?'+':''}${minToHM(e.delta)}</span><button onclick="deleteKontoEntry(${i})" style="background:var(--red-lt);color:var(--red-tx);border:none;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer">✕</button></div></div>`).join('');}
+  if(kl.length){document.getElementById('k-hist-card').style.display='';document.getElementById('k-hist').innerHTML=kl.slice(0,10).map((e,i)=>`<div class="hi-item"><div><div class="hi-main">${e.typ}${e.einheit?' · '+e.einheit:e.val?' · '+e.val+' Std.':''}</div><div class="hi-date">${e.date}</div></div><div style="display:flex;align-items:center;gap:8px"><span class="badge ${e.delta>0?'b-red':e.delta<0?'b-green':'b-gray'}">${e.delta>0?'+':''}${minToHM(e.delta)}</span><button onclick="deleteKontoEntry(${i})" style="background:var(--red-lt);color:var(--red-tx);border:none;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer">✕</button></div></div>`).join('');}
   // Init urlaub einheit toggle
   document.getElementById('k-einheit-row').style.display='flex';
   document.getElementById('k-hval').value='1';
