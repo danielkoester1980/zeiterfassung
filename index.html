@@ -721,7 +721,6 @@ function startTimer(){
   startEp=st.getTime();totalPauseSec=0;pauseStartEp=null;pausing=false;running=true;
   document.getElementById('wrap-start').style.display='none';document.getElementById('wrap-stop').style.display='';
   document.getElementById('t-corr').value=val;
-  document.getElementById('t-end-corr').value='';
   window._endEpOverride=null;
   clearInterval(tiv);tiv=setInterval(()=>{tick();save();},1000);tick();
   requestNotificationPermission();
